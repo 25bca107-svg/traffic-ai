@@ -1,0 +1,108 @@
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Security Middleware
+app.use(helmet());
+app.use(cors({ origin: '*' }));
+app.use(express.json({ limit: '1mb' }));
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { error: 'Too many requests from this IP, please try again later.' }
+});
+app.use('/lookup', limiter);
+
+// In-Memory Data Store (Replace with DB client like PostgreSQL / Redis / MongoDB)
+const mockDataStore = new Map([
+  ['NP-1001', { id: 'NP-1001', status: 'ACTIVE', type: 'Patrol Shift', location: 'District A', timestamp: new Date().toISOString() }],
+  ['NP-1002', { id: 'NP-1002', status: 'COMPLETED', type: 'Incidental Report', location: 'District B', timestamp: new Date().toISOString() }]
+]);
+
+/**
+ * GET /lookup
+ * Lookup query endpoint accepts query params (e.g., /lookup?id=NP-1001)
+ */
+app.get('/lookup', async (req, res) => {
+  try {
+    const { id, query } = req.query;
+    const targetKey = id || query;
+
+    if (!targetKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required query parameter: "id" or "query"'
+      });
+    }
+
+    const record = mockDataStore.get(String(targetKey).trim());
+
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: 'Record not found',
+        query: targetKey
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    console.error('Error handling lookup:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error'
+    });
+  }
+});
+
+/**
+ * POST /lookup
+ * Alternative endpoint for POST body payloads
+ */
+app.post('/lookup', async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Body payload must contain an "id" field'
+      });
+    }
+
+    const record = mockDataStore.get(String(id).trim());
+
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        error: 'Record not found',
+        id
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: record
+    });
+  } catch (error) {
+    console.error('Error handling lookup POST:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error'
+    });
+  }
+});
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Night Patrol Lookup API server running on port ${PORT}`);
+});
