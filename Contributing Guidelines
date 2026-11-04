@@ -1,0 +1,31 @@
+Contributing to Night Patrol Lookup
+Thank you for your interest in contributing to the Night Patrol Lookup System! We welcome bug reports, feature requests, and code contributions.
+
+🚀 Getting Started
+Fork the Repository on GitHub.
+
+Clone your fork locally:
+
+git clone https://github.com/your-username/night-patrol-lookup.git
+Create a branch for your fix or feature:
+
+git checkout -b feature/amazing-new-feature
+🛠️ Development Workflow
+Install backend and frontend dependencies in their respective folders:
+
+cd server && npm install
+cd ../client && npm install
+Ensure existing tests pass and write new tests for added functionality.
+
+Keep code cleanly formatted and linted before committing.
+
+📥 Submitting Pull Requests
+Push your changes to your branch:
+
+git push origin feature/amazing-new-feature
+Open a Pull Request (PR) against the main branch.
+
+Fill out the PR template completely so reviewers understand your changes.
+
+📜 Code of Conduct
+Be respectful, collaborative, and constructive in all discussions, issues, and code reviews.
