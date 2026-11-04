@@ -1,0 +1,122 @@
+import React, { useState } from 'react';
+import { Search, AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+
+export default function LookupDashboard() {
+  const [searchId, setSearchId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleLookup = async (e) => {
+    e.preventDefault();
+    if (!searchId.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await fetch(`/lookup?id=${encodeURIComponent(searchId.trim())}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to locate record');
+      }
+
+      setResult(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
+        {/* Header */}
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Night Patrol Lookup</h1>
+            <p className="text-slate-400 text-sm">Query incident logs and patrol shift statuses</p>
+          </div>
+        </div>
+
+        {/* Search Form */}
+        <form onSubmit={handleLookup} className="space-y-4 mb-6">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Enter Record ID (e.g. NP-1001)"
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+            <Search className="w-5 h-5 text-slate-500 absolute left-3.5 top-4" />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !searchId.trim()}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 font-semibold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 text-white shadow-lg shadow-indigo-600/20"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Searching Records...</span>
+              </>
+            ) : (
+              <span>Perform Lookup</span>
+            )}
+          </button>
+        </form>
+
+        {/* Error Display */}
+        {error && (
+          <div className="p-4 bg-red-950/40 border border-red-500/30 rounded-xl flex items-start space-x-3 text-red-300">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-sm">Lookup Failed</p>
+              <p className="text-xs text-red-400 mt-0.5">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Result Card */}
+        {result && (
+          <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Record Details</span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                {result.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-slate-500 text-xs">Record ID</p>
+                <p className="font-mono text-white font-medium">{result.id}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 text-xs">Type</p>
+                <p className="text-white font-medium">{result.type}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 text-xs">Location</p>
+                <p className="text-white font-medium">{result.location}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 text-xs">Timestamp</p>
+                <p className="text-slate-300 text-xs font-mono">{new Date(result.timestamp).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
